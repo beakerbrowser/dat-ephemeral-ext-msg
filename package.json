@@ -1,0 +1,35 @@
+{
+  "name": "@beaker/dat-ephemeral-ext-msg",
+  "version": "0.0.1",
+  "description": "Methods for implementing DEP-0000: Ephemeral Messages (Extension Message)",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test.js",
+    "protobuf": "protocol-buffers schema.proto -o encodings.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beakerbrowser/dat-ephemeral-ext-msg.git"
+  },
+  "keywords": [
+    "dat",
+    "extension",
+    "message",
+    "ephemeral"
+  ],
+  "author": "Paul Frazee <pfrazee@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/beakerbrowser/dat-ephemeral-ext-msg/issues"
+  },
+  "homepage": "https://github.com/beakerbrowser/dat-ephemeral-ext-msg#readme",
+  "dependencies": {
+    "protocol-buffers-encodings": "^1.1.0"
+  },
+  "devDependencies": {
+    "hyperdrive": "^9.13.0",
+    "protocol-buffers": "^4.0.4",
+    "random-access-memory": "^3.0.0",
+    "tape": "^4.9.1"
+  }
+}
