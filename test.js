@@ -136,3 +136,58 @@ tape('no peers causes no issue', function (t) {
     t.end()
   })
 })
+
+tape('fires received-bad-message', function (t) {
+  // must use 2 instances to represent 2 different nodes
+  var srcEphemeral = new DatEphemeralExtMsg()
+  var cloneEphemeral = new DatEphemeralExtMsg()
+
+  var src = hyperdrive(ram)
+  var clone
+  src.on('ready', function () {
+    // generate clone instance
+    clone = hyperdrive(ram, src.key)
+    clone.on('ready', startReplication)
+  })
+
+  function startReplication () {
+    // wire up archives
+    srcEphemeral.watchDat(src)
+    cloneEphemeral.watchDat(clone)
+
+    // listen to events
+    cloneEphemeral.on('received-bad-message', err => {
+      t.ok(err instanceof Error, 'error was emitted')
+      t.end()
+    })
+
+    // start replication
+    var stream1 = clone.replicate({
+      id: new Buffer('clone-stream'),
+      live: true,
+      extensions: ['ephemeral']
+    })
+    var stream2 = src.replicate({
+      id: new Buffer('src-stream'),
+      live: true,
+      extensions: ['ephemeral']
+    })
+    stream1.pipe(stream2).pipe(stream1)
+
+    // wait for handshakes
+    var handshakeCount = 0
+    stream1.on('handshake', gotHandshake)
+    stream2.on('handshake', gotHandshake)
+
+    function gotHandshake () {
+      if (++handshakeCount !== 2) return
+
+      // has support
+      t.ok(srcEphemeral.hasSupport(src, src.metadata.peers[0]), 'clone has support')
+      t.ok(cloneEphemeral.hasSupport(clone, clone.metadata.peers[0]), 'src has support')
+
+      // send bad message
+      src.metadata.peers[0].stream.extension('ephemeral', Buffer.from([0,1,2,3]))
+    }
+  }
+})
