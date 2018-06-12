@@ -136,8 +136,7 @@ class DatWatcher {
   }
 
   onPeerRemove (peer) {
-    // unstore session data
-    delete this.sessionDatas[toStr(toRemoteId(peer))]
+    // TODO needed?
   }
 }
 
