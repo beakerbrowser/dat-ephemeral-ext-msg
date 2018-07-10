@@ -1,6 +1,6 @@
 # dat-ephemeral-ext-msg
 
-Methods for implementing [DEP-0000: Ephemeral Messages (Extension Message)](https://github.com/pfrazee/DEPs/blob/630a69141f80ea218ff20aa6353b7da67ba4d849/proposals/0000-ephemeral-message.md).
+Methods for implementing ephemeral messages as extension messages over Dat. [Read the spec here.](./spec.md)
 
 ```js
 const {DatEphemeralExtMsg} = require('@beaker/dat-ephemeral-ext-msg')
