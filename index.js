@@ -37,7 +37,7 @@ class DatEphemeralExtMsg extends EventEmitter {
     if (watcher) {
       var peer = watcher.getPeer(remoteId)
       if (peer) {
-        return getPeerProtocolStream(peer).remoteSupports('ephemeral')
+        return remoteSupports(peer, 'ephemeral')
       }
     }
     return false
@@ -77,7 +77,7 @@ class DatWatcher {
   send (remoteId, message = {}) {
     // get peer and assure support exists
     var peer = this.getPeer(remoteId)
-    if (!getPeerProtocolStream(peer).remoteSupports('ephemeral')) {
+    if (!remoteSupports(peer, 'ephemeral')) {
       return
     }
 
@@ -174,6 +174,12 @@ function getPeerRemoteId (peer) {
   var protocolStream = getPeerProtocolStream(peer)
   if (!protocolStream) return null
   return protocolStream.remoteId
+}
+
+function remoteSupports (peer, ext) {
+  var protocolStream = getPeerProtocolStream(peer)
+  if (!protocolStream) return false
+  return protocolStream.remoteSupports(ext)
 }
 
 function toRemoteId (peer) {
