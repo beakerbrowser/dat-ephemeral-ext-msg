@@ -1,6 +1,6 @@
 {
   "name": "@beaker/dat-ephemeral-ext-msg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Methods for implementing DEP-0000: Ephemeral Messages (Extension Message)",
   "main": "index.js",
   "scripts": {
