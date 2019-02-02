@@ -12,6 +12,7 @@ class DatEphemeralExtMsg extends EventEmitter {
 
   getWatcher (dat) {
     var key = toStr(dat.key)
+    console.log(`Watching key: ${key}`)
     return {key, watcher: this.datWatchers[key]}
   }
 
@@ -36,6 +37,10 @@ class DatEphemeralExtMsg extends EventEmitter {
     var {watcher} = this.getWatcher(dat)
     if (watcher) {
       var peer = watcher.getPeer(remoteId)
+      if (peer) {
+        console.log('Peer', peer.feed.id.toString('hex'))
+        // console.log('remoteId', remoteId)
+      }
       if (peer) {
         return remoteSupports(peer, 'ephemeral')
       }
@@ -108,12 +113,24 @@ class DatWatcher {
   }
 
   get hypercore () {
-    // if dat is a hyperdrive, use the metadata hypercore
+    // if dat is a hyperdrive, use the local hypercore
     // otherwise assume dat is a hypercore already
-    return this.dat.metadata ? this.dat.metadata : this.dat
+    if (this.dat.metadata) {
+      console.log('About to return metadata')
+      return this.dat.metadata
+    } else if (this.dat.source) {
+      // This is not the origin node, return the source
+      console.log('About to return source hypercore', this.dat.source.key.toString('hex'))
+      return this.dat.source
+    } else {
+      console.log('About to return direct hypercore')
+      return this.dat
+    }
+    // return this.dat.local ? this.dat.local : this.dat
   }
 
   getPeer (remoteId) {
+    // console.log(`getPeer: looking up`, remoteId)
     remoteId = toRemoteId(remoteId)
     return this.hypercore.peers.find(p => isSameId(remoteId, toRemoteId(p)))
   }
@@ -172,12 +189,16 @@ function getPeerProtocolStream (peer) {
 
 function getPeerRemoteId (peer) {
   var protocolStream = getPeerProtocolStream(peer)
+  console.log('Is protocolstream?', !!protocolStream)
   if (!protocolStream) return null
+  console.log('Returning', protocolStream.remoteId.toString('hex'))
   return protocolStream.remoteId
 }
 
 function remoteSupports (peer, ext) {
   var protocolStream = getPeerProtocolStream(peer)
+  // console.log('Protocol stream', protocolStream)
+  // console.log(ext)
   if (!protocolStream) return false
   return protocolStream.remoteSupports(ext)
 }
