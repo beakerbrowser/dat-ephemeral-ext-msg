@@ -4,7 +4,7 @@
   "description": "Methods for implementing DEP-0000: Ephemeral Messages (Extension Message)",
   "main": "index.js",
   "scripts": {
-    "test": "tape test.js",
+    "test": "tape test/*.js",
     "protobuf": "protocol-buffers schema.proto -o encodings.js"
   },
   "repository": {
