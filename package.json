@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/beakerbrowser/dat-ephemeral-ext-msg#readme",
   "dependencies": {
+    "hypercore": "^6.24.0",
     "hyperdb": "github:aral/hyperdb#local-options",
     "protocol-buffers-encodings": "^1.1.0"
   },

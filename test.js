@@ -1,5 +1,5 @@
 var tape = require('tape')
-var database = require('hyperdb')
+var database = require('hyperdrive')
 var ram = require('random-access-memory')
 var {DatEphemeralExtMsg} = require('./')
 
@@ -16,33 +16,48 @@ tape('exchange ephemeral messages', function (t) {
   var clone
   var cloneFeed
 
-  // Isomorphic interface to support hypercore, hyperdb, and hyperdrive
+  var self = this
+
+  // Isomorphic interface to support hypercore, hyperdb, and hyperdrive.
+  // The three packages have slightly different APIs that makes this necessary.
+  // TODO: open issue for unifying the interfaces.
   var srcFeed = src.source || src.metadata || src
-  var putFunction = isHyperdrive ? 'writeFile' : 'put'
+  var putFunction = isHyperdrive ? 'writeFile' : isHyperDB ? 'put' : 'append'
+
+  firstCallback = (err) => {
+    t.error(err, 'no error')
+    src[putFunction].apply(src, secondArgs)
+  }
+
+  secondCallback = (err) => {
+    t.error(err, 'no error')
+    src[putFunction].apply(src, thirdArgs)
+  }
+
+  thirdCallback = (err) => {
+    t.error(err, 'no error')
+    if (isHyperdrive) {
+      t.same(src.version, 3, 'version correct')
+    }
+
+    // generate clone instance
+    clone = database(ram, src.key)
+    cloneFeed = clone.source || clone.metadata || clone
+    clone.on('ready', startReplication)
+  }
+
+  var firstArgs = (isHyperdrive || isHyperDB) ? ['/first.txt', 'number 1', firstCallback] : ['first', firstCallback]
+  var secondArgs = (isHyperdrive || isHyperDB) ? ['/second.txt', 'number 2', secondCallback] : ['second', secondCallback]
+  var thirdArgs = (isHyperdrive || isHyperDB) ? ['/third.txt', 'number 3', thirdCallback] : ['first', thirdCallback]
 
   src.on('ready', function () {
     // generate source archive
     t.ok(srcFeed.writable)
 
-    src[putFunction]('/first.txt', 'number 1', function (err) {
-      t.error(err, 'no error')
-      src[putFunction]('/second.txt', 'number 2', function (err) {
-        t.error(err, 'no error')
-        src[putFunction]('/third.txt', 'number 3', function (err) {
-          t.error(err, 'no error')
-          // t.same(src.version, 3, 'version correct')
-
-          // generate clone instance
-          clone = database(ram, src.key)
-          cloneFeed = clone.source || clone.metadata || clone
-          clone.on('ready', startReplication)
-        })
-      })
-    })
+    src[putFunction].apply(src, firstArgs)
   })
 
   function startReplication () {
-    console.log('Starting replication')
     // wire up archives
     srcEphemeral.watchDat(src)
     cloneEphemeral.watchDat(clone)
@@ -52,7 +67,6 @@ tape('exchange ephemeral messages', function (t) {
     srcEphemeral.on('message', onMessage1)
     cloneEphemeral.on('message', onMessage1)
     function onMessage1 (archive, peer, msg) {
-      console.log('MESSAGE')
       if (archive === src) {
         // received clone's data
         t.same(msg.contentType, 'application/json', 'received clone data')
@@ -86,10 +100,9 @@ tape('exchange ephemeral messages', function (t) {
     stream1.on('handshake', gotHandshake)
     stream2.on('handshake', gotHandshake)
 
-
     function gotHandshake () {
       if (++handshakeCount !== 2) return
-      console.log('Handshake count', handshakeCount)
+
       // has support
       t.ok(srcEphemeral.hasSupport(src, srcFeed.peers[0]), 'src has support')
       t.ok(cloneEphemeral.hasSupport(clone, cloneFeed.peers[0]), 'clone has support')
