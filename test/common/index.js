@@ -1,18 +1,21 @@
 // Common tests that are run once for
 // hypercore, hyperdb, and hyperdrive.
 
-module.exports = function () {
+var tape = require('tape')
+var ram = require('random-access-memory')
+var {DatEphemeralExtMsg} = require('../../')
 
-  var tape = require('tape')
-  var database = require('hyperdrive')
-  var ram = require('random-access-memory')
-  var {DatEphemeralExtMsg} = require('../../')
+
+module.exports = function (database) {
 
   var isHypercore = database.name === 'Feed'
   var isHyperDB = database.name === 'HyperDB'
   var isHyperdrive = database.name === 'Hyperdrive'
 
-  tape('exchange ephemeral messages', function (t) {
+  var databaseNames = {Feed: 'hypercore', HyperDB: 'hyperdb', Hyperdrive: 'hyperdrive'}
+  var databaseName = databaseNames[database.name]
+
+  tape(`exchange ephemeral messages: ${databaseName}`, function (t) {
     // must use 2 instances to represent 2 different nodes
     var srcEphemeral = new DatEphemeralExtMsg()
     var cloneEphemeral = new DatEphemeralExtMsg()
@@ -29,17 +32,17 @@ module.exports = function () {
     var srcFeed = src.source || src.metadata || src
     var putFunction = isHyperdrive ? 'writeFile' : isHyperDB ? 'put' : 'append'
 
-    firstCallback = (err) => {
+    function firstCallback (err) {
       t.error(err, 'no error')
       src[putFunction].apply(src, secondArgs)
     }
 
-    secondCallback = (err) => {
+    function secondCallback (err) {
       t.error(err, 'no error')
       src[putFunction].apply(src, thirdArgs)
     }
 
-    thirdCallback = (err) => {
+    function thirdCallback (err) {
       t.error(err, 'no error')
       if (isHyperdrive) {
         t.same(src.version, 3, 'version correct')
@@ -156,7 +159,7 @@ module.exports = function () {
     }
   })
 
-  tape('no peers causes no issue', function (t) {
+  tape(`no peers causes no issue: ${databaseName}`, function (t) {
     var ephemeral = new DatEphemeralExtMsg()
 
     var src = database(ram)
@@ -168,7 +171,7 @@ module.exports = function () {
     })
   })
 
-  tape('fires received-bad-message', function (t) {
+  tape(`fires received-bad-message: ${databaseName}`, function (t) {
     // must use 2 instances to represent 2 different nodes
     var srcEphemeral = new DatEphemeralExtMsg()
     var cloneEphemeral = new DatEphemeralExtMsg()
