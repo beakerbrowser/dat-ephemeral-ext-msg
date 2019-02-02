@@ -1,30 +1,40 @@
 var tape = require('tape')
-var hyperdb = require('hyperdb')
+var database = require('hyperdb')
 var ram = require('random-access-memory')
 var {DatEphemeralExtMsg} = require('./')
+
+var isHypercore = database.name === 'Feed'
+var isHyperDB = database.name === 'HyperDB'
+var isHyperdrive = database.name === 'Hyperdrive'
 
 tape('exchange ephemeral messages', function (t) {
   // must use 2 instances to represent 2 different nodes
   var srcEphemeral = new DatEphemeralExtMsg()
   var cloneEphemeral = new DatEphemeralExtMsg()
 
-  var src = hyperdb(ram)
+  var src = database(ram)
   var clone
+  var cloneFeed
+
+  // Isomorphic interface to support hypercore, hyperdb, and hyperdrive
+  var srcFeed = src.source || src.metadata || src
+  var putFunction = isHyperdrive ? 'writeFile' : 'put'
+
   src.on('ready', function () {
     // generate source archive
-    // t.ok(src.writable)
-    t.ok(src.local.writable)
-    // t.ok(src.content.writable)
-    src.put('/first.txt', 'number 1', function (err) {
+    t.ok(srcFeed.writable)
+
+    src[putFunction]('/first.txt', 'number 1', function (err) {
       t.error(err, 'no error')
-      src.put('/second.txt', 'number 2', function (err) {
+      src[putFunction]('/second.txt', 'number 2', function (err) {
         t.error(err, 'no error')
-        src.put('/third.txt', 'number 3', function (err) {
+        src[putFunction]('/third.txt', 'number 3', function (err) {
           t.error(err, 'no error')
           // t.same(src.version, 3, 'version correct')
 
           // generate clone instance
-          clone = hyperdb(ram, src.key)
+          clone = database(ram, src.key)
+          cloneFeed = clone.source || clone.metadata || clone
           clone.on('ready', startReplication)
         })
       })
@@ -81,17 +91,12 @@ tape('exchange ephemeral messages', function (t) {
       if (++handshakeCount !== 2) return
       console.log('Handshake count', handshakeCount)
       // has support
-      // console.log('clone', clone)
-      // console.log('clone.local', clone.local)
-      // console.log('clone.local.peers', clone.local.peers)
-      // console.log('clone', clone)
-      // console.log('===> clone.source.peers[0]', clone.source.peers[0])
-      t.ok(srcEphemeral.hasSupport(src, src.source.peers[0]), 'src has support 1')
-      t.ok(cloneEphemeral.hasSupport(clone, clone.source.peers[0]), 'clone has support 1')
+      t.ok(srcEphemeral.hasSupport(src, srcFeed.peers[0]), 'src has support')
+      t.ok(cloneEphemeral.hasSupport(clone, cloneFeed.peers[0]), 'clone has support')
 
       // send values
-      srcEphemeral.send(src, src.source.peers[0], {contentType: 'application/json', payload: '"foo"'})
-      cloneEphemeral.send(clone, clone.source.peers[0], {contentType: 'application/json', payload: '"bar"'})
+      srcEphemeral.send(src, srcFeed.peers[0], {contentType: 'application/json', payload: '"foo"'})
+      cloneEphemeral.send(clone, cloneFeed.peers[0], {contentType: 'application/json', payload: '"bar"'})
     }
 
     function hasReceivedEvents1 () {
@@ -136,7 +141,7 @@ tape('exchange ephemeral messages', function (t) {
 tape('no peers causes no issue', function (t) {
   var ephemeral = new DatEphemeralExtMsg()
 
-  var src = hyperdb(ram)
+  var src = database(ram)
   src.on('ready', function () {
     ephemeral.watchDat(src)
     ephemeral.broadcast(src, {contentType: 'application/json', payload: '"test"'})
@@ -150,11 +155,14 @@ tape('fires received-bad-message', function (t) {
   var srcEphemeral = new DatEphemeralExtMsg()
   var cloneEphemeral = new DatEphemeralExtMsg()
 
-  var src = hyperdb(ram)
+  var src = database(ram)
+  var srcFeed = src.source || src.metadata || src
   var clone
+  var cloneFeed
   src.on('ready', function () {
     // generate clone instance
-    clone = hyperdb(ram, src.key)
+    clone = database(ram, src.key)
+    cloneFeed = clone.source || clone.metadata || clone
     clone.on('ready', startReplication)
   })
 
@@ -191,11 +199,11 @@ tape('fires received-bad-message', function (t) {
       if (++handshakeCount !== 2) return
 
       // has support
-      t.ok(srcEphemeral.hasSupport(src, src.source.peers[0]), 'src has support 2')
-      t.ok(cloneEphemeral.hasSupport(clone, clone.source.peers[0]), 'clone has support 2')
+      t.ok(srcEphemeral.hasSupport(src, srcFeed.peers[0]), 'src has support')
+      t.ok(cloneEphemeral.hasSupport(clone, cloneFeed.peers[0]), 'clone has support')
 
       // send bad message
-      src.source.peers[0].stream.extension('ephemeral', Buffer.from([0,1,2,3]))
+      srcFeed.peers[0].stream.extension('ephemeral', Buffer.from([0,1,2,3]))
     }
   }
 })
