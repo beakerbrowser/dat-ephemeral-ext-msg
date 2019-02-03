@@ -16,6 +16,7 @@ module.exports = function (database) {
   var databaseName = databaseNames[database.name]
 
   tape(`exchange ephemeral messages: ${databaseName}`, function (t) {
+
     // must use 2 instances to represent 2 different nodes
     var srcEphemeral = new DatEphemeralExtMsg()
     var cloneEphemeral = new DatEphemeralExtMsg()
@@ -92,12 +93,12 @@ module.exports = function (database) {
 
       // start replication
       var stream1 = clone.replicate({
-        id: new Buffer('clone-stream'),
+        id: Buffer.from('clone-stream'),
         live: true,
         extensions: ['ephemeral']
       })
       var stream2 = src.replicate({
-        id: new Buffer('src-stream'),
+        id: Buffer.from('src-stream'),
         live: true,
         extensions: ['ephemeral']
       })
@@ -111,13 +112,16 @@ module.exports = function (database) {
       function gotHandshake () {
         if (++handshakeCount !== 2) return
 
-        // has support
-        t.ok(srcEphemeral.hasSupport(src, srcFeed.peers[0]), 'src has support')
-        t.ok(cloneEphemeral.hasSupport(clone, cloneFeed.peers[0]), 'clone has support')
+        // We need to do this on the next tick to give clone’s peers a chance to populate.
+        process.nextTick(() => {
+          // has support
+          t.ok(srcEphemeral.hasSupport(src, srcFeed.peers[0]), 'src has support')
+          t.ok(cloneEphemeral.hasSupport(clone, cloneFeed.peers[0]), 'clone has support')
 
-        // send values
-        srcEphemeral.send(src, srcFeed.peers[0], {contentType: 'application/json', payload: '"foo"'})
-        cloneEphemeral.send(clone, cloneFeed.peers[0], {contentType: 'application/json', payload: '"bar"'})
+          // send values
+          srcEphemeral.send(src, srcFeed.peers[0], {contentType: 'application/json', payload: '"foo"'})
+          cloneEphemeral.send(clone, cloneFeed.peers[0], {contentType: 'application/json', payload: '"bar"'})
+        })
       }
 
       function hasReceivedEvents1 () {
@@ -200,12 +204,12 @@ module.exports = function (database) {
 
       // start replication
       var stream1 = clone.replicate({
-        id: new Buffer('clone-stream'),
+        id: Buffer.from('clone-stream'),
         live: true,
         extensions: ['ephemeral']
       })
       var stream2 = src.replicate({
-        id: new Buffer('src-stream'),
+        id: Buffer.from('src-stream'),
         live: true,
         extensions: ['ephemeral']
       })
@@ -219,12 +223,15 @@ module.exports = function (database) {
       function gotHandshake () {
         if (++handshakeCount !== 2) return
 
-        // has support
-        t.ok(srcEphemeral.hasSupport(src, srcFeed.peers[0]), 'src has support')
-        t.ok(cloneEphemeral.hasSupport(clone, cloneFeed.peers[0]), 'clone has support')
+        // We need to do this on the next tick to give clone’s peers a chance to populate.
+        process.nextTick(() => {
+          // has support
+          t.ok(srcEphemeral.hasSupport(src, srcFeed.peers[0]), 'src has support')
+          t.ok(cloneEphemeral.hasSupport(clone, cloneFeed.peers[0]), 'clone has support')
 
-        // send bad message
-        srcFeed.peers[0].stream.extension('ephemeral', Buffer.from([0,1,2,3]))
+          // send bad message
+          srcFeed.peers[0].stream.extension('ephemeral', Buffer.from([0,1,2,3]))
+        })
       }
     }
   })
