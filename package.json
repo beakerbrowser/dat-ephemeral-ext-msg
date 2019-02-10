@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "hypercore": "^6.24.0",
-    "hyperdb": "github:aral/hyperdb#local-options",
+    "hyperdb": "^3.5.0",
     "hyperdrive": "^9.14.2",
     "protocol-buffers": "^4.0.4",
     "random-access-memory": "^3.0.0",
