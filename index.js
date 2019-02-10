@@ -108,9 +108,16 @@ class DatWatcher {
   }
 
   get hypercore () {
-    // if dat is a hyperdrive, use the metadata hypercore
+    // if dat is a hyperdrive, use the metadata hypercore,
+    // if it’s hyperdb, use the source hypercore,
     // otherwise assume dat is a hypercore already
-    return this.dat.metadata ? this.dat.metadata : this.dat
+    if (this.dat.metadata) {
+      return this.dat.metadata
+    } else if (this.dat.source) {
+      return this.dat.source
+    } else {
+      return this.dat
+    }
   }
 
   getPeer (remoteId) {
