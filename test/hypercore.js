@@ -1,2 +1,2 @@
-var database = require('hypercore')
-require('./common')(database)
+var dat = require('hypercore')
+require('./common')(dat)

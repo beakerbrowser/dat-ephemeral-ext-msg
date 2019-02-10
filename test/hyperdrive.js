@@ -1,2 +1,2 @@
-var database = require('hyperdrive')
-require('./common')(database)
+var dat = require('hyperdrive')
+require('./common')(dat)

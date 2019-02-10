@@ -23,23 +23,23 @@ var mySwarm = discoverySwarm(swarmDefaults({
 /**
  * Step 2. Wire up each dat you create
  */
-datEphemeralExtMsg.watchDat(database) // can pass a hypercore, hyperdb, or hyperdrive reference as the database
-// datEphemeralExtMsg.unwatchDat(database) when done
+datEphemeralExtMsg.watchDat(dat) // can pass a hypercore, hyperdb, or hyperdrive reference as the dat
+// datEphemeralExtMsg.unwatchDat(dat) when done
 
 /**
  * Step 3. Listen to events
  */
-datEphemeralExtMsg.on('message', (database, peer, {contentType, payload}) => {
-  // `peer` has sent `payload` of mimetype `contentType` for `database`
+datEphemeralExtMsg.on('message', (dat, peer, {contentType, payload}) => {
+  // `peer` has sent `payload` of mimetype `contentType` for `dat`
 })
-datEphemeralExtMsg.on('received-bad-message', (err, database, peer, messageBuffer) => {
+datEphemeralExtMsg.on('received-bad-message', (err, dat, peer, messageBuffer) => {
   // there was an error parsing a received message
 })
 
 /**
  * Step 4. Use the API
  */
-datEphemeralExtMsg.hasSupport(database, peerId)
-datEphemeralExtMsg.broadcast(database, {contentType, payload})
-datEphemeralExtMsg.send(database, peerId, {contentType, payload})
+datEphemeralExtMsg.hasSupport(dat, peerId)
+datEphemeralExtMsg.broadcast(dat, {contentType, payload})
+datEphemeralExtMsg.send(dat, peerId, {contentType, payload})
 ```

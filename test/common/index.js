@@ -6,22 +6,22 @@ var ram = require('random-access-memory')
 var {DatEphemeralExtMsg} = require('../../')
 
 
-module.exports = function (database) {
+module.exports = function (dat) {
 
-  var isHypercore = database.name === 'Feed'
-  var isHyperDB = database.name === 'HyperDB'
-  var isHyperdrive = database.name === 'Hyperdrive'
+  var isHypercore = dat.name === 'Feed'
+  var isHyperDB = dat.name === 'HyperDB'
+  var isHyperdrive = dat.name === 'Hyperdrive'
 
-  var databaseNames = {Feed: 'hypercore', HyperDB: 'hyperdb', Hyperdrive: 'hyperdrive'}
-  var databaseName = databaseNames[database.name]
+  var datNames = {Feed: 'hypercore', HyperDB: 'hyperdb', Hyperdrive: 'hyperdrive'}
+  var datName = datNames[dat.name]
 
-  tape(`exchange ephemeral messages: ${databaseName}`, function (t) {
+  tape(`exchange ephemeral messages: ${datName}`, function (t) {
 
     // must use 2 instances to represent 2 different nodes
     var srcEphemeral = new DatEphemeralExtMsg()
     var cloneEphemeral = new DatEphemeralExtMsg()
 
-    var src = database(ram)
+    var src = dat(ram)
     var clone
     var cloneFeed
 
@@ -50,7 +50,7 @@ module.exports = function (database) {
       }
 
       // generate clone instance
-      clone = database(ram, src.key)
+      clone = dat(ram, src.key)
       cloneFeed = clone.source || clone.metadata || clone
       clone.on('ready', startReplication)
     }
@@ -163,10 +163,10 @@ module.exports = function (database) {
     }
   })
 
-  tape(`no peers causes no issue: ${databaseName}`, function (t) {
+  tape(`no peers causes no issue: ${datName}`, function (t) {
     var ephemeral = new DatEphemeralExtMsg()
 
-    var src = database(ram)
+    var src = dat(ram)
     src.on('ready', function () {
       ephemeral.watchDat(src)
       ephemeral.broadcast(src, {contentType: 'application/json', payload: '"test"'})
@@ -175,18 +175,18 @@ module.exports = function (database) {
     })
   })
 
-  tape(`fires received-bad-message: ${databaseName}`, function (t) {
+  tape(`fires received-bad-message: ${datName}`, function (t) {
     // must use 2 instances to represent 2 different nodes
     var srcEphemeral = new DatEphemeralExtMsg()
     var cloneEphemeral = new DatEphemeralExtMsg()
 
-    var src = database(ram)
+    var src = dat(ram)
     var srcFeed = src.source || src.metadata || src
     var clone
     var cloneFeed
     src.on('ready', function () {
       // generate clone instance
-      clone = database(ram, src.key)
+      clone = dat(ram, src.key)
       cloneFeed = clone.source || clone.metadata || clone
       clone.on('ready', startReplication)
     })

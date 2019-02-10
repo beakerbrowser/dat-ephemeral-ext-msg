@@ -1,2 +1,2 @@
-var database = require('hyperdb')
-require('./common')(database)
+var dat = require('hyperdb')
+require('./common')(dat)
