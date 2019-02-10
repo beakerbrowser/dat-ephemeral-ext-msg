@@ -16,7 +16,7 @@ var mySwarm = discoverySwarm(swarmDefaults({
       extensions: ['ephemeral']
     })
     // ...
-    return streams
+    return stream
   }
 }))
 
